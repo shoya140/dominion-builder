@@ -1,0 +1,1 @@
+web: BACKEND_URL=wss://dominion-builder-backend.herokuapp.com yarn start:client
