@@ -27,14 +27,22 @@ class ConnectionManager:
 
     async def handle_message(self, room_id: str, user_id, message: str):
         data = json.loads(message)
+
         if data["event_type"] == "submit selections":
             self.connections[room_id][user_id]["selections"] = data["selections"]
-            await self.broadcast_room_status(room_id)
+
+        if data["event_type"] == "update user name":
+            self.connections[room_id][user_id]["user_name"] = data["user_name"]
+
+        await self.broadcast_room_status(room_id)
 
     async def broadcast_room_status(self, room_id):
         filtered_user_status = [
-            {"userName": x["user_name"], "submitted": len(x["selections"])}
-            for x in self.connections[room_id].values()
+            {
+                "userId": user_id,
+                "userName": x["user_name"],
+                "submitted": len(x["selections"])
+            } for user_id, x in self.connections[room_id].items()
         ]
         payload = {
             "eventType": "users updated",
@@ -61,6 +69,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 def read_root():
