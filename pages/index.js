@@ -10,27 +10,42 @@ const backendURL = (
 ).replace('ws', 'http')
 
 export default function Home() {
-  const [isServerRunning, setIsServerRunning] = useState(true)
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false)
 
   const router = useRouter()
   const toast = useToast()
 
   const createNewRoom = () => {
-    router.push(`/${uuidv4().substring(0, 8)}/`)
+    let trial = 0
+    setIsCreatingRoom(true)
+
+    const timer = setInterval(() => {
+      fetch(backendURL)
+        .then((res) => {
+          clearInterval(timer)
+          router.push(`/${uuidv4().substring(0, 8)}/`)
+        })
+        .catch((error) => {
+          trial += 1
+          if (trial > 9) {
+            clearInterval(timer)
+            setIsCreatingRoom(false)
+            toast({
+              title: '部屋の作成に失敗しました',
+              description: 'もう一度試してみてください。',
+              status: 'error',
+              duration: 5000,
+              isClosable: true,
+            })
+          }
+        })
+    }, 1000)
   }
 
   useEffect(() => {
     fetch(backendURL)
       .then((res) => {})
-      .catch((error) => {
-        setIsServerRunning(false)
-        const timer = setInterval(() => {
-          fetch(backendURL).then((res) => {
-            clearInterval(timer)
-            setIsServerRunning(true)
-          })
-        }, 1000)
-      })
+      .catch((error) => {})
   }, [])
 
   return (
@@ -45,9 +60,9 @@ export default function Home() {
         <Button
           size="md"
           onClick={createNewRoom}
-          isLoading={!isServerRunning}
-          loadingText="サーバーを起動中"
-          width="180px"
+          isLoading={isCreatingRoom}
+          loadingText="部屋を作成中"
+          width="160px"
         >
           新しく部屋を作る
         </Button>
