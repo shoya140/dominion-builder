@@ -162,9 +162,9 @@ export default function Room() {
                 }}
                 disabled={submitted}
               >
-                {cards.map(({ name, extension }) => (
+                {cards.map(({ name, expansion }) => (
                   <option key={`card-${selectionIndex}-${name}`} value={name}>
-                    {extension} - {name}
+                    {expansion} - {name}
                   </option>
                 ))}
               </Select>
