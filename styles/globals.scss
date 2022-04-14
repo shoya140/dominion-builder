@@ -20,5 +20,30 @@ body {
 .content {
   margin: 0 auto;
   max-width: 600px;
-  padding: 20px;
+  padding: 40px 20px;
+}
+
+.content-wide {
+  margin: 0 auto;
+  max-width: 1000px;
+  padding: 40px 20px;
+}
+
+.no-selectable {
+  -ms-user-select: none;
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.no-break {
+  display: inline-block;
+}
+
+.floating-top {
+  position: fixed;
+  top: 30px;
+  right: 20px;
+  z-index: 1;
 }

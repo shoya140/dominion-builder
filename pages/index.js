@@ -3,7 +3,7 @@ import { Button, Heading, HStack, Text, useToast } from '@chakra-ui/react'
 import { useRouter } from 'next/router'
 import { v4 as uuidv4 } from 'uuid'
 
-import Layout from '../components/layout'
+import { Layout } from '../components/layout'
 
 const backendURL = (
   process.env.BACKEND_URL ? process.env.BACKEND_URL : 'ws://localhost:8000'
@@ -56,7 +56,7 @@ export default function Home() {
       <Text fontSize="md" mb={4}>
         ドミニオンのサプライをプレイヤーの投票によって決めるWebサイトです。部屋ごとにリンクが発行されるので、他の人を簡単に招待することができます。
       </Text>
-      <HStack>
+      <HStack mb={1}>
         <Button
           size="md"
           onClick={createNewRoom}
@@ -79,7 +79,7 @@ export default function Home() {
             })
           }}
         >
-          他の人が作った部屋に入る
+          部屋に入る
         </Button>
       </HStack>
     </Layout>

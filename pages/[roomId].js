@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { v4 as uuidv4 } from 'uuid'
+import Mikan from 'mikanjs'
 import {
   Avatar,
   AvatarBadge,
@@ -9,16 +10,18 @@ import {
   HStack,
   Input,
   Link,
-  Select,
   Text,
   Tooltip,
   VStack,
   useClipboard,
   useToast,
+  SimpleGrid,
+  Center,
+  Spacer,
 } from '@chakra-ui/react'
 import { LinkIcon } from '@chakra-ui/icons'
 
-import Layout from '../components/layout'
+import { Layout, FloatingTop } from '../components/layout'
 import cards from '../lib/cards.json'
 
 const N_USERS = 4
@@ -34,12 +37,17 @@ const backendURL = process.env.BACKEND_URL
 
 const defaultUserName = process.env.NODE_ENV === 'development' ? 'dev' : ''
 
+const groupedCards = cards.reduce((result, card) => {
+  result[card.expansion] = [...(result[card.expansion] || []), card]
+  return result
+}, {})
+
 let ws
 
 export default function Room() {
   const [userName, setUserName] = useState(defaultUserName)
   const [userNameValue, setUserNameValue] = useState('')
-  const [selections, setSelections] = useState(['おまかせ', 'おまかせ'])
+  const [selections, setSelections] = useState([])
   const [submitted, setSubmitted] = useState(false)
   const [users, setUsers] = useState([])
   const [inviteLink, setInviteLink] = useState('')
@@ -58,19 +66,25 @@ export default function Room() {
     )
     toast({
       title: '投票を受け付けました',
-      description: '他の人が投票を完了するまでお待ち下さい。',
+      description: '他の人の投票完了をお待ち下さい。',
       status: 'success',
       duration: 6000,
       isClosable: true,
     })
   }
 
-  const updateSelection = (selectionIndex, newValue) => {
-    setSelections(
-      [...selections].map((value, index) => {
-        return index === selectionIndex ? newValue : value
-      })
-    )
+  const selectCard = (name) => {
+    if (
+      submitted ||
+      (selections.length === N_SELECTIONS && !selections.includes(name))
+    ) {
+      return
+    }
+    if (selections.includes(name)) {
+      setSelections([...selections].filter((n) => n !== name))
+    } else {
+      setSelections([...selections, name])
+    }
   }
 
   const handleUserNameValueChange = (e) => {
@@ -110,82 +124,158 @@ export default function Room() {
   }, [router.isReady])
 
   return (
-    <Layout>
+    <>
       {userName && (
         <>
-          <HStack mb={6} overflowX="scroll">
-            {users.map(({ userName, submitted }, index) => (
-              <Tooltip
-                key={`user-${index}`}
-                hasArrow
-                label={submitted ? '投票完了' : '投票中'}
-                placement="top"
-                bg={submitted ? 'green.400' : 'blue.400'}
-                shadow={false}
-              >
-                <Box p={2} borderRadius={4} textAlign="center" width="90px">
-                  <Avatar>
-                    <AvatarBadge
-                      boxSize="1.25em"
-                      bg={submitted ? 'green.400' : 'blue.400'}
-                    />
-                  </Avatar>
-                  <Text fontSize="sm" mt={2} isTruncated>
-                    {userName}
+          {!submitted && selections.length === N_SELECTIONS && (
+            <FloatingTop>
+              <Button colorScheme="blue" onClick={submitSelections} size="lg">
+                投票する
+              </Button>
+            </FloatingTop>
+          )}
+          <Layout wide>
+            <Text fontSize="xl" fontWeight="600" textAlign="center">
+              Room ID: {router.query.roomId} (選択枚数: {N_SELECTIONS})
+            </Text>
+            <HStack mt={10} mb={6} overflowX="scroll">
+              {users.map(({ userName, submitted }, index) => (
+                <Tooltip
+                  key={`user-${index}`}
+                  hasArrow
+                  label={submitted ? '投票完了' : '投票中'}
+                  placement="top"
+                  bg={submitted ? 'green.400' : 'blue.400'}
+                  shadow={false}
+                >
+                  <Box p={2} borderRadius={4} textAlign="center" width="90px">
+                    <Avatar>
+                      <AvatarBadge
+                        boxSize="1.25em"
+                        bg={submitted ? 'green.400' : 'blue.400'}
+                      />
+                    </Avatar>
+                    <Text fontSize="sm" mt={2} isTruncated>
+                      {userName}
+                    </Text>
+                  </Box>
+                </Tooltip>
+              ))}
+              {users.length < N_USERS && (
+                <Box
+                  p={5}
+                  borderRadius={4}
+                  textAlign="center"
+                  onClick={onCopy}
+                  bgColor="gray.50"
+                  cursor="pointer"
+                >
+                  <LinkIcon w={6} h={6} />
+                  <Text fontSize="xs" mt={2}>
+                    {hasCopied ? 'コピーしました' : 'リンクをコピー'}
                   </Text>
                 </Box>
-              </Tooltip>
-            ))}
-            {users.length < N_USERS && (
-              <Box
-                p={5}
-                borderRadius={4}
-                textAlign="center"
-                onClick={onCopy}
-                bgColor="gray.50"
-                cursor="pointer"
-              >
-                <LinkIcon w={6} h={6} />
-                <Text fontSize="xs" mt={2}>
-                  {hasCopied ? 'コピーしました' : 'リンクをコピー'}
-                </Text>
-              </Box>
-            )}
-          </HStack>
-          <VStack spacing={2} mb={12}>
-            {[...Array(N_SELECTIONS).keys()].map((selectionIndex) => (
-              <Select
-                key={`selection-${selectionIndex}`}
-                placeholder="カードを選択してください"
-                onChange={(e) => {
-                  updateSelection(selectionIndex, e.target.value)
-                }}
-                disabled={submitted}
-              >
-                {cards.map(({ name, expansion }) => (
-                  <option key={`card-${selectionIndex}-${name}`} value={name}>
-                    {expansion} - {name}
-                  </option>
-                ))}
-              </Select>
-            ))}
-            <Button
-              colorScheme="blue"
-              onClick={submitSelections}
-              isFullWidth={true}
-              disabled={submitted}
-            >
-              投票する
-            </Button>
-          </VStack>
-          <HStack spacing={4}>
-            <Link href={`/`}>トップページに戻る</Link>
-            <Link onClick={clearUserName}>ユーザー名を変更する</Link>
-          </HStack>
+              )}
+            </HStack>
+            <VStack spacing={2} mb={6} align="left">
+              {Object.keys(groupedCards).map((expansion) => (
+                <div key={`expansion-${expansion}`}>
+                  <Text
+                    mb={2}
+                    fontSize="xl"
+                    fontWeight="600"
+                    opacity={selections.length === N_SELECTIONS ? 0.4 : 1}
+                    className="no-selectable"
+                  >
+                    {expansion}
+                  </Text>
+                  <SimpleGrid mb={3} minChildWidth="90px" spacing={2}>
+                    {groupedCards[expansion].map(
+                      ({ name, type, cost, description }) => (
+                        <Tooltip
+                          key={`card-${name}`}
+                          hasArrow
+                          label={
+                            <>
+                              <Text>
+                                [{cost}] {type}
+                              </Text>
+                              <Text>{description}</Text>
+                            </>
+                          }
+                          placement="top"
+                          bg="gray.100"
+                          color="black"
+                          shadow={false}
+                        >
+                          <Center
+                            height="50px"
+                            border="1px"
+                            color={
+                              selections.includes(name) ? 'white' : 'black'
+                            }
+                            bgColor={
+                              selections.includes(name)
+                                ? submitted
+                                  ? 'green.400'
+                                  : 'blue.400'
+                                : 'transparent'
+                            }
+                            borderColor={
+                              selections.includes(name)
+                                ? 'transparant'
+                                : 'gray.200'
+                            }
+                            borderRadius={4}
+                            textAlign="center"
+                            cursor={
+                              submitted ||
+                              (selections.length === N_SELECTIONS &&
+                                !selections.includes(name))
+                                ? 'auto'
+                                : 'pointer'
+                            }
+                            onClick={(e) => {
+                              selectCard(name)
+                            }}
+                            opacity={
+                              selections.length === N_SELECTIONS &&
+                              !selections.includes(name)
+                                ? 0.4
+                                : 1
+                            }
+                          >
+                            <Text fontSize="sm" className="no-selectable">
+                              {Mikan.split(name).map((text, index) => (
+                                <span
+                                  key={`card-${name}-${index}`}
+                                  className="no-break"
+                                >
+                                  {text}
+                                </span>
+                              ))}
+                            </Text>
+                          </Center>
+                        </Tooltip>
+                      )
+                    )}
+                  </SimpleGrid>
+                </div>
+              ))}
+            </VStack>
+            <HStack spacing={4}>
+              <Link href={`/`}>トップページに戻る</Link>
+              <Link onClick={clearUserName}>ユーザー名を変更する</Link>
+              <Spacer />
+            </HStack>
+          </Layout>
         </>
       )}
       {!userName && (
-        <>
+        <Layout>
+          <Text mb={2} fontSize="xl" fontWeight="600" textAlign="center">
+            Room ID: {router.query.roomId}
+          </Text>
           <HStack mb={12}>
             <Input
               value={userNameValue}
@@ -201,8 +291,8 @@ export default function Room() {
               決定
             </Button>
           </HStack>
-        </>
+        </Layout>
       )}
-    </Layout>
+    </>
   )
 }

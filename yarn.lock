@@ -2177,6 +2177,11 @@ micromatch@^4.0.4:
     braces "^3.0.2"
     picomatch "^2.3.1"
 
+mikanjs@^1.0.13:
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/mikanjs/-/mikanjs-1.0.13.tgz#885972e62d1551c0d30cee667051f3e2920edd12"
+  integrity sha512-ucHmzZ+O66UUWgWoIRhukaFVdzs8IVkGElFMOhv8VVg1BzFn78E5Vh3CuPIZ2Qs7iWvVNVfMbGBrLCYEsDonpg==
+
 minimatch@^3.0.4, minimatch@^3.1.2:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.1.2.tgz#19cd194bfd3e428f049a70817c038d89ab4be35b"

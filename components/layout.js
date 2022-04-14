@@ -1,6 +1,6 @@
 import Head from 'next/head'
 
-export default function Layout({ children }) {
+export function Layout({ children, wide }) {
   return (
     <div>
       <Head>
@@ -13,8 +13,12 @@ export default function Layout({ children }) {
       </Head>
 
       <div className="container">
-        <div className="content">{children}</div>
+        <div className={wide ? 'content-wide' : 'content'}>{children}</div>
       </div>
     </div>
   )
+}
+
+export function FloatingTop({ children }) {
+  return <div className="floating-top">{children}</div>
 }
