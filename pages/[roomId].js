@@ -10,6 +10,11 @@ import {
   HStack,
   Input,
   Link,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
   Text,
   Tooltip,
   VStack,
@@ -18,14 +23,13 @@ import {
   SimpleGrid,
   Center,
   Spacer,
+  UnorderedList,
+  ListItem,
 } from '@chakra-ui/react'
 import { LinkIcon } from '@chakra-ui/icons'
 
 import { Layout, FloatingTop } from '../components/layout'
 import cards from '../lib/cards.json'
-
-const N_USERS = 4
-const N_SELECTIONS = 2
 
 const frontendURL = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL
@@ -51,6 +55,9 @@ export default function Room() {
   const [submitted, setSubmitted] = useState(false)
   const [users, setUsers] = useState([])
   const [inviteLink, setInviteLink] = useState('')
+  const [nUsers, setNUsers] = useState(0)
+  const [nSelections, setNSelections] = useState(0)
+  const [result, setResult] = useState(null)
 
   const router = useRouter()
   const toast = useToast()
@@ -76,7 +83,7 @@ export default function Room() {
   const selectCard = (name) => {
     if (
       submitted ||
-      (selections.length === N_SELECTIONS && !selections.includes(name))
+      (selections.length === nSelections && !selections.includes(name))
     ) {
       return
     }
@@ -111,6 +118,10 @@ export default function Room() {
       return
     }
 
+    const encodedRoomParameter = parseInt(router.query.roomId.charAt(0))
+    setNUsers(Math.floor(encodedRoomParameter / 3) + 2)
+    setNSelections((encodedRoomParameter % 3) + 1)
+
     const userId = uuidv4().substring(0, 8)
     setInviteLink(`${frontendURL}/${router.query.roomId}`)
     ws = new WebSocket(`${backendURL}/${router.query.roomId}/${userId}`)
@@ -118,6 +129,16 @@ export default function Room() {
       const data = JSON.parse(event.data)
       if (data.eventType === 'users updated') {
         setUsers(data.users)
+      }
+      if (data.eventType === 'voting completed') {
+        console.log(data)
+        const c = cards
+          .filter(({ name }) => data.cards.includes(name))
+          .reduce((result, card) => {
+            result[card.expansion] = [...(result[card.expansion] || []), card]
+            return result
+          }, {})
+        setResult({ cards: c, logs: data.logs })
       }
     }
     ws.onopen = () => {}
@@ -127,7 +148,7 @@ export default function Room() {
     <>
       {userName && (
         <>
-          {!submitted && selections.length === N_SELECTIONS && (
+          {!submitted && selections.length === nSelections && (
             <FloatingTop>
               <Button colorScheme="blue" onClick={submitSelections} size="lg">
                 投票する
@@ -136,7 +157,7 @@ export default function Room() {
           )}
           <Layout wide>
             <Text fontSize="xl" fontWeight="600" textAlign="center">
-              Room ID: {router.query.roomId} (選択枚数: {N_SELECTIONS})
+              Room ID: {router.query.roomId} ({nUsers}人, {nSelections}枚)
             </Text>
             <HStack mt={10} mb={6} overflowX="scroll">
               {users.map(({ userName, submitted }, index) => (
@@ -161,7 +182,7 @@ export default function Room() {
                   </Box>
                 </Tooltip>
               ))}
-              {users.length < N_USERS && (
+              {users.length < nUsers && (
                 <Box
                   p={5}
                   borderRadius={4}
@@ -184,7 +205,7 @@ export default function Room() {
                     mb={2}
                     fontSize="xl"
                     fontWeight="600"
-                    opacity={selections.length === N_SELECTIONS ? 0.4 : 1}
+                    opacity={selections.length === nSelections ? 0.4 : 1}
                     className="no-selectable"
                   >
                     {expansion}
@@ -230,7 +251,7 @@ export default function Room() {
                             textAlign="center"
                             cursor={
                               submitted ||
-                              (selections.length === N_SELECTIONS &&
+                              (selections.length === nSelections &&
                                 !selections.includes(name))
                                 ? 'auto'
                                 : 'pointer'
@@ -239,7 +260,7 @@ export default function Room() {
                               selectCard(name)
                             }}
                             opacity={
-                              selections.length === N_SELECTIONS &&
+                              selections.length === nSelections &&
                               !selections.includes(name)
                                 ? 0.4
                                 : 1
@@ -274,7 +295,7 @@ export default function Room() {
       {!userName && (
         <Layout>
           <Text mb={2} fontSize="xl" fontWeight="600" textAlign="center">
-            Room ID: {router.query.roomId}
+            Room ID: {router.query.roomId} ({nUsers}人, {nSelections}枚)
           </Text>
           <HStack mb={12}>
             <Input
@@ -292,6 +313,40 @@ export default function Room() {
             </Button>
           </HStack>
         </Layout>
+      )}
+      {result && (
+        <Modal
+          isOpen={result}
+          size="xl"
+          closeOnEsc={false}
+          closeOnOverlayClick={false}
+          isCentered
+        >
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>集計結果</ModalHeader>
+            <ModalBody>
+              <UnorderedList>
+                {result.logs.map((log, index) => (
+                  <ListItem key={`result-log-${index}`}>{log}</ListItem>
+                ))}
+              </UnorderedList>
+              <Box mt={4} mb={8} p={4} bgColor="gray.50">
+                <UnorderedList>
+                  {Object.keys(result.cards).map((expansion, index) => (
+                    <ListItem key={`result-extension-${index}`}>
+                      <span>{expansion}から</span>
+                      {result.cards[expansion].map(({ name }) => (
+                        <span key={`result-card-${name}`}>「{name}」</span>
+                      ))}
+                    </ListItem>
+                  ))}
+                </UnorderedList>
+                <Text>を選択してゲームを開始してください。</Text>
+              </Box>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
       )}
     </>
   )

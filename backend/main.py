@@ -30,6 +30,9 @@ class ConnectionManager:
 
         if data["event_type"] == "submit selections":
             self.connections[room_id][user_id]["selections"] = data["selections"]
+            n_users = int(room_id[0]) // 3 + 2  # defined in the frontend
+            if len([x for x in self.connections[room_id].values() if len(x["selections"]) > 0]) == (n_users):
+                await self.broadcast_results(room_id)
 
         if data["event_type"] == "update user name":
             self.connections[room_id][user_id]["user_name"] = data["user_name"]
@@ -47,6 +50,21 @@ class ConnectionManager:
         payload = {
             "eventType": "users updated",
             "users": filtered_user_status
+        }
+        await self.broadcast(json.dumps(payload), room_id)
+
+    async def broadcast_results(self, room_id: str):
+        cards = {}
+        logs = []
+        for user in self.connections[room_id].values():
+            selections = "と".join(["「" + x + "」" for x in user["selections"]])
+            logs.append(user["user_name"] + "は" + selections + "を指定しました。")
+            for selection in user["selections"]:
+                cards[selection] = 1
+        payload = {
+            "eventType": "voting completed",
+            "cards": list(cards.keys()),
+            "logs": logs
         }
         await self.broadcast(json.dumps(payload), room_id)
 
