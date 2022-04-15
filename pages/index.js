@@ -6,6 +6,7 @@ import {
   HStack,
   Link,
   Select,
+  Spacer,
   Text,
   useToast,
 } from '@chakra-ui/react'
@@ -149,6 +150,17 @@ export default function Home() {
         >
           部屋に入る
         </Link>
+        <Link
+          href={
+            'https://github.com/shoya140/dominion-builder/blob/main/CHANGELOG.md'
+          }
+        >
+          Change Log
+        </Link>
+        <Link href={'https://github.com/shoya140/dominion-builder/'}>
+          GitHub
+        </Link>
+        <Spacer />
       </HStack>
     </Layout>
   )
