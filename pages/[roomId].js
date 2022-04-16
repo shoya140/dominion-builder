@@ -80,17 +80,17 @@ export default function Room() {
     })
   }
 
-  const selectCard = (name) => {
+  const selectCard = (series) => {
     if (
       submitted ||
-      (selections.length === nSelections && !selections.includes(name))
+      (selections.length === nSelections && !selections.includes(series))
     ) {
       return
     }
-    if (selections.includes(name)) {
-      setSelections([...selections].filter((n) => n !== name))
+    if (selections.includes(series)) {
+      setSelections([...selections].filter((s) => s !== series))
     } else {
-      setSelections([...selections, name])
+      setSelections([...selections, series])
     }
   }
 
@@ -212,7 +212,7 @@ export default function Room() {
                   </Text>
                   <SimpleGrid mb={3} minChildWidth="90px" spacing={2}>
                     {groupedCards[expansion].map(
-                      ({ name, type, cost, description }) => (
+                      ({ name, series, type, cost, description }) => (
                         <Tooltip
                           key={`card-${name}`}
                           hasArrow
@@ -233,17 +233,17 @@ export default function Room() {
                             height="50px"
                             border="1px"
                             color={
-                              selections.includes(name) ? 'white' : 'black'
+                              selections.includes(series) ? 'white' : 'black'
                             }
                             bgColor={
-                              selections.includes(name)
+                              selections.includes(series)
                                 ? submitted
                                   ? 'green.400'
                                   : 'blue.400'
                                 : 'transparent'
                             }
                             borderColor={
-                              selections.includes(name)
+                              selections.includes(series)
                                 ? 'transparant'
                                 : 'gray.200'
                             }
@@ -252,16 +252,16 @@ export default function Room() {
                             cursor={
                               submitted ||
                               (selections.length === nSelections &&
-                                !selections.includes(name))
+                                !selections.includes(series))
                                 ? 'auto'
                                 : 'pointer'
                             }
                             onClick={(e) => {
-                              selectCard(name)
+                              selectCard(series)
                             }}
                             opacity={
                               selections.length === nSelections &&
-                              !selections.includes(name)
+                              !selections.includes(series)
                                 ? 0.4
                                 : 1
                             }
