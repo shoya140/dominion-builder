@@ -4,6 +4,7 @@ import {
   Button,
   Heading,
   HStack,
+  Image,
   Link,
   Select,
   Spacer,
@@ -90,9 +91,10 @@ export default function Home() {
       <Heading size="xl" mb={2}>
         Dominion Builder
       </Heading>
-      <Text fontSize="md" mb={6}>
+      <Text fontSize="md" mb={2}>
         ドミニオンのサプライをプレイヤーの投票によって決めるWebサイトです。部屋ごとにリンクが発行されるので、他の人を簡単に招待することができます。
       </Text>
+      <Image mb={2} src="/concept.png" />
       <Box p={4} mb={6} bgColor="gray.50" borderRadius={6}>
         <Text fontSize="md" mb={3}>
           参加人数とプレイヤーが指定するカード枚数を決めて部屋を作りましょう。
