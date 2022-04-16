@@ -1,5 +1,11 @@
 # Change Log
 
+## 2022.04.16 Version 0.2.1
+
+### 🔧 Fix
+* Support split piles and travelers
+* Add a concept image and support Twitter OGP
+
 ## 2022.04.15 Version 0.2.0
 
 ### 🚀 New
